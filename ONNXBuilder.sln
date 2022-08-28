@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProtoBufLib", "ProtoBufLib\ProtoBufLib.vcxproj", "{C86D1F85-FA06-4CC5-B6D3-62EE519CC6EB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "Tests\Tests.vcxproj", "{48D8EE6E-FCF4-473E-91E8-DD95328918A5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C86D1F85-FA06-4CC5-B6D3-62EE519CC6EB}.Release|Any CPU.ActiveCfg = Release|Win32
+		{C86D1F85-FA06-4CC5-B6D3-62EE519CC6EB}.Release|Any CPU.Build.0 = Release|Win32
+		{C86D1F85-FA06-4CC5-B6D3-62EE519CC6EB}.Debug|Any CPU.ActiveCfg = Release|x64
+		{C86D1F85-FA06-4CC5-B6D3-62EE519CC6EB}.Debug|Any CPU.Build.0 = Release|x64
+		{48D8EE6E-FCF4-473E-91E8-DD95328918A5}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{48D8EE6E-FCF4-473E-91E8-DD95328918A5}.Debug|Any CPU.Build.0 = Debug|Win32
+		{48D8EE6E-FCF4-473E-91E8-DD95328918A5}.Release|Any CPU.ActiveCfg = Release|Win32
+		{48D8EE6E-FCF4-473E-91E8-DD95328918A5}.Release|Any CPU.Build.0 = Release|Win32
+	EndGlobalSection
+EndGlobal
