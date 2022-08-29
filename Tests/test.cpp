@@ -29,4 +29,5 @@ TEST(BasicTests, DumpSyntheticModel)
     cout << "Dumping synthetic onnx" << endl;
     MLP testMlp(10,12,2,4,0.7f);
     cout << testMlp.toString()<<endl;
+    testMlp.WriteToFile("testMlp.onnx");
 }
