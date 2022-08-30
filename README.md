@@ -10,7 +10,11 @@ Next, you will need the goolge protobuf runtime libraries.
 The easiest way I ghave found to get those on windows is to use vcpkg.
 If you do not yet have vcpkg, you can install it following the directions
 at https://vcpkg.io/en/getting-started.html
+
+Remember to run vcpkg integrate install to enable vcpkg in VS2022 and Rider2022
+
 Once you have vcpkg installed you can get the protobuf libraries by using
 the command:  vcpkg install protobuf
+
 
 
