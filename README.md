@@ -16,5 +16,9 @@ Remember to run vcpkg integrate install to enable vcpkg in VS2022 and Rider2022
 Once you have vcpkg installed you can get the protobuf libraries by using
 the command:  vcpkg install protobuf
 
+## What can go wrong
+Remember to set the library and test builds both to release.  Failure to do so can
+cause  link errors/
+
 
 
