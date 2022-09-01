@@ -68,6 +68,16 @@ namespace onxb
             node->mutable_op_type()->assign("Relu");
         }
 
+        void add_sigmoid_op(string  name, string input1,
+            string output)
+        {
+            onnx::NodeProto* node = protobuf.mutable_graph()->add_node();
+            node->mutable_name()->assign(name);
+            node->add_input(input1);
+            node->add_output(output);
+            node->mutable_op_type()->assign("Sigmoid");
+        }
+
         
         
     public:
@@ -130,6 +140,10 @@ namespace onxb
                     string("hidden_relu_out_")+numstr);
                 last_node = string("hidden_relu_out_")+numstr;
             }
+            //make output layer
+            add_mult_op("output_mult",last_node,"out_weights","output_mult_out");
+            add_add_op("ouput_bias","bias","output_mult_out","output_bias_out");
+            add_sigmoid_op("output_sigmoid","output_bias_out","output");
         }
         string toString()
         {
