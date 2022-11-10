@@ -14,6 +14,8 @@ namespace onxb
         onnx::ModelProto protobuf;
         int input_layer_size;
         int output_layer_size;
+        int hidden_layer_size;
+        int num_hidden_layer;
         
 
         onnx::TensorProto*  add_weights_init(string name,int depth,int width)
@@ -22,6 +24,8 @@ namespace onxb
             node->mutable_name()->assign(name);
             node->add_dims(depth); //depth
             node->add_dims(width); // width
+            for (int i = 0; i < depth * width; i++)
+                node->add_float_data(1.0);
             node->set_data_type(
                 onnx::TensorProto::DataType::TensorProto_DataType_FLOAT);
             //data will be set when we run the MLP
@@ -87,7 +91,7 @@ namespace onxb
 
         MLP(int input_layer,int hidden_layer,int hidden_layer_count,int output_layer,
             float bias):
-            input_layer_size(input_layer),output_layer_size(output_layer)
+            input_layer_size(input_layer),output_layer_size(output_layer),hidden_layer_size(hidden_layer),num_hidden_layer(hidden_layer_count)
         {
             protobuf.clear_graph();
             protobuf.mutable_graph()->set_name("MLP Graph");
@@ -156,6 +160,83 @@ namespace onxb
         {
             std::ofstream ofs(fname, std::ios_base::out | std::ios_base::binary);
             protobuf.SerializeToOstream(&ofs);
+
+        }
+        int GetWeightCount()
+        {
+            onnx::GraphProto graph_proto = protobuf.graph();
+            int weight_count = 0;
+            for (int i = 1; i < graph_proto.initializer_size() - 1; i++)
+            {
+                const onnx::TensorProto& tensor_proto = graph_proto.initializer(i);
+                int tensor_size = 1;
+
+                for (int j = 0; j < tensor_proto.dims_size(); j++) {
+                    tensor_size *= tensor_proto.dims(j);
+                }
+
+                weight_count += tensor_size;
+            }
+
+            //return weight_count;
+            return output_layer_size + hidden_layer_size * num_hidden_layer;
+        }
+        float* ExtractWeights()
+        {
+            int num_weights = GetWeightCount();
+            float* weights = new float[num_weights];
+            onnx::GraphProto graph_proto = protobuf.graph();
+            int weight_counter = 0;
+
+            for (int i = 1; i < graph_proto.initializer_size() - 1; i++)
+            {
+                const onnx::TensorProto& tensor_proto = graph_proto.initializer(i);
+                int tensor_size = 1;
+
+                for (int j = 0; j < tensor_proto.dims_size(); j++) {
+                    tensor_size *= tensor_proto.dims(j);
+                }
+
+                if (tensor_proto.data_type() == onnx::TensorProto_DataType_FLOAT) {
+
+                    std::string raw_data_val = tensor_proto.raw_data();
+                    const char* val = raw_data_val.c_str();
+
+                    for (int k = 0; k < tensor_size; k++) {
+                        weights[weight_counter] = tensor_proto.float_data(k);
+                        weight_counter++;
+                    }
+                }
+            }
+
+
+            return weights;
+
+        }
+        void SetWeights(float* weights)
+        {
+            onnx::GraphProto* graph_proto = protobuf.mutable_graph();
+            int weight_counter = 0;
+
+            for (int i = 1; i < graph_proto->initializer_size() - 1; i++)
+            {
+                onnx::TensorProto tensor_proto_og = graph_proto->initializer(i);
+                onnx::TensorProto* tensor_proto = graph_proto->mutable_initializer(i);
+                int tensor_size = 1;
+
+                for (int j = 0; j < tensor_proto->dims_size(); j++) {
+                    tensor_size *= tensor_proto->dims(j);
+                }
+
+                if (tensor_proto->data_type() == onnx::TensorProto_DataType_FLOAT) {
+
+                    for (int k = 0; k < tensor_size; k++) {
+                        tensor_proto->set_float_data(k, weights[weight_counter]);
+                        weight_counter++;
+                    }
+
+                }
+            }
 
         }
         
