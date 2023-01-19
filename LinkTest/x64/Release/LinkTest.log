@@ -1,0 +1,9 @@
+﻿  LinkTest.cpp
+E:\ONNXBuilder\LinkTest\LinkTest.cpp(11,51): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\ONNXBuilder\LinkTest\LinkTest.cpp(32,16): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+  Generating code
+E:\ONNXBuilder\LinkTest\LinkTest.cpp(32): error C4700: uninitialized local variable 'byteArray' used
+  1 of 1613 functions (<0.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+LINK : fatal error LNK1257: code generation failed
