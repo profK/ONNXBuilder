@@ -19,9 +19,39 @@
                 bias);
         }
 
+        ModelStruct()
+        {
+            _mlp = nullptr;
+        }
+
         ~ModelStruct()
         {
             delete _mlp;
+        }
+
+        float* getWeights()
+        {
+            return _mlp->ExtractWeights();
+        }
+
+        int getWeightCount()
+        {
+            return _mlp->GetWeightCount();
+        }
+
+        void setWeights(float* weights)
+        {
+            _mlp->SetWeights(weights);
+        }
+
+        string toString()
+        {
+            return _mlp->toString();
+        }
+
+        int* getByteArray()
+        {
+            return _mlp->GetByteArray();
         }
     };
     
@@ -31,19 +61,28 @@
         return * new ModelStruct(input_layer,hidden_layer,hidden_layer_count,output_layer, bias);
     }
     
-    int GetWeightCount(OpaqueModel& model)
+    int GetWeightCount(OpaqueModel* model)
     {
-        //TODO
-        return 0;
+        ModelStruct* mTemp = (ModelStruct*)model;
+        return mTemp->getWeightCount();
     }
-    float* ExtractWeights(OpaqueModel& model)
+    float* ExtractWeights(OpaqueModel* model)
     {
-        //todo
-        return nullptr;
+        ModelStruct* mTemp = (ModelStruct*)model;
+        return mTemp->getWeights();
     }
-    void SetWeights(OpaqueModel& model, float* weights)
+    void SetWeights(OpaqueModel* model, float* weights)
     {
-        //TODO
+        ModelStruct* mTemp = (ModelStruct*)model;
+        mTemp->setWeights(weights);
+
+        model = (OpaqueModel*)mTemp;
+    }
+
+    int* GetByteArray(OpaqueModel* model)
+    {
+        ModelStruct* mTemp = (ModelStruct*)model;
+        return mTemp->getByteArray();
     }
 
 

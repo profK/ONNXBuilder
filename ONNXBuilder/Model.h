@@ -164,23 +164,33 @@ namespace onxb
         }
         int GetWeightCount()
         {
-            onnx::GraphProto graph_proto = protobuf.graph();
-            int weight_count = 0;
-            for (int i = 1; i < graph_proto.initializer_size() - 1; i++)
-            {
-                const onnx::TensorProto& tensor_proto = graph_proto.initializer(i);
-                int tensor_size = 1;
+            //onnx::GraphProto graph_proto = protobuf.graph();
+            //int weight_count = 0;
+            //for (int i = 1; i < graph_proto.initializer_size() - 1; i++)
+            //{
+            //    const onnx::TensorProto& tensor_proto = graph_proto.initializer(i);
+            //    int tensor_size = 1;
 
-                for (int j = 0; j < tensor_proto.dims_size(); j++) {
-                    tensor_size *= tensor_proto.dims(j);
-                }
+            //    for (int j = 0; j < tensor_proto.dims_size(); j++) {
+            //        tensor_size *= tensor_proto.dims(j);
+            //    }
 
-                weight_count += tensor_size;
-            }
+            //    weight_count += tensor_size;
+            //}
 
             //return weight_count;
             return output_layer_size + hidden_layer_size * num_hidden_layer;
         }
+
+        int* GetByteArray()
+        {
+            size_t size = protobuf.ByteSizeLong();
+            void* byteArray = malloc(size);
+            protobuf.SerializeToArray(byteArray, size);
+
+            return (int*)byteArray;
+        }
+
         float* ExtractWeights()
         {
             int num_weights = GetWeightCount();
