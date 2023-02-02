@@ -2,24 +2,46 @@
 //
 
 #include <iostream>
+#include <fstream>
 #include "../ONNXBuilder/ONNXBuilder.h"
 
 using namespace std;
 
+bool AreArraysEqual(const uint8_t* array1, const uint8_t* array2, size_t size)
+{
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (array1[i] != array2[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 int main()
 {
-    OpaqueModel& mlp = MakeMLP(10, 3, 12, 10, 0.07);
 
-    int weight_count = GetWeightCount(&mlp);
+    //cout << GetDebugFromFile("mlp.onnx") << endl;
 
-    float* weights = ExtractWeights(&mlp);
+    //cout << "-----------------------------" << endl;
+
+   OpaqueModel& mlp = MakeMLP(10, 12, 2, 4, 0.07);
+
+   int weight_count = GetWeightCount(&mlp);
+
+   cout << "WeightCount: " << weight_count << endl;
+
+   float* weights = ExtractWeights(&mlp);
     for (int i = 0; i < weight_count; i++)
         cout << weights[i] << " ";
     cout << endl;
 
+
     float* new_weights = new float[weight_count];
     for (int i = 0; i < weight_count; i++)
-        new_weights[i] = float(i) / 100;
+        new_weights[i] = float(i) / 1000;
     SetWeights(&mlp, new_weights);
 
     float* weights2 = ExtractWeights(&mlp);
@@ -27,8 +49,19 @@ int main()
         cout << weights2[i] << " ";
     cout << endl;
 
-    int* byteArray = GetByteArray(&mlp);
-    return 0;
+    int byteArraySize = GetByteArraySize(&mlp);
+
+    cout << "ByteArraySize: " << byteArraySize << endl;
+
+    //uint8_t* byteArray = GetByteArray(&mlp);
+    //uint8_t* byteArrayString = GetByteString(&mlp);
+
+    //cout << AreArraysEqual(byteArray, byteArrayString, byteArraySize) << endl;
+
+    //WriteToFile(&mlp);
+    //cout << GetDebugString(&mlp) << endl;
+
+    return 0; 
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

@@ -95,6 +95,13 @@ namespace onxb
         {
             protobuf.clear_graph();
             protobuf.mutable_graph()->set_name("MLP Graph");
+
+            onnx::OperatorSetIdProto opset;
+            opset.set_domain("");
+            opset.set_version(10);
+            protobuf.mutable_opset_import()->Add()->CopyFrom(opset);
+
+            protobuf.set_ir_version(5);
             
             onnx::ValueInfoProto* input =protobuf.mutable_graph()->add_input();
             auto input_type =
@@ -111,17 +118,15 @@ namespace onxb
             output_type->mutable_shape()->add_dim()->set_dim_value(output_layer_size);
             output->mutable_type()->set_allocated_tensor_type(output_type);
             output->mutable_name()->assign("output");
-            
-            
-           
-            //make weights nodes
-            add_weights_init("in_weights",1,input_layer);
-            for(int layer_num=0;layer_num<hidden_layer_count;layer_num++)
+
+            add_weights_init("in_weights", input_layer, hidden_layer);
+            for(int layer_num=0;layer_num<hidden_layer_count-1;layer_num++)
             {
-                add_weights_init("hidden_weights_"+layer_num,1,
+                string numstr = to_string(layer_num);
+                add_weights_init(string("hidden_weights_") + numstr, hidden_layer,
                 hidden_layer);
             }
-            add_weights_init("out_weights",1,output_layer);
+            add_weights_init("out_weights", hidden_layer, output_layer);
             add_bias_init(bias);
 
             // make input layer
@@ -160,13 +165,12 @@ namespace onxb
         {
             std::ofstream ofs(fname, std::ios_base::out | std::ios_base::binary);
             protobuf.SerializeToOstream(&ofs);
-
         }
         int GetWeightCount()
         {
             //onnx::GraphProto graph_proto = protobuf.graph();
             //int weight_count = 0;
-            //for (int i = 1; i < graph_proto.initializer_size() - 1; i++)
+            //for (int i = 0; i < graph_proto.initializer_size() - 1; i++)
             //{
             //    const onnx::TensorProto& tensor_proto = graph_proto.initializer(i);
             //    int tensor_size = 1;
@@ -179,16 +183,41 @@ namespace onxb
             //}
 
             //return weight_count;
-            return output_layer_size + hidden_layer_size * num_hidden_layer;
+
+            int in_weights_count = input_layer_size * hidden_layer_size;
+            int hidden_weights = (hidden_layer_size * hidden_layer_size * (num_hidden_layer - 1));
+            int out_weights = hidden_layer_size * output_layer_size;
+
+            return in_weights_count + hidden_weights + out_weights;
         }
 
-        int* GetByteArray()
+        size_t GetByteArraySize()
         {
-            size_t size = protobuf.ByteSizeLong();
-            void* byteArray = malloc(size);
+            return protobuf.ByteSizeLong();
+        }
+
+        uint8_t* GetByteString()
+        {
+            std::string serialized;
+            protobuf.SerializeToString(&serialized);
+
+            uint8_t* uint8_array = new uint8_t[serialized.length()];
+            memcpy(uint8_array, serialized.data(), serialized.length());
+
+            return uint8_array;
+        }
+
+        uint8_t* GetByteArray()
+        {
+            int size = protobuf.ByteSizeLong();
+            uint8_t* byteArray = new uint8_t[size];
             protobuf.SerializeToArray(byteArray, size);
 
-            return (int*)byteArray;
+            //google::protobuf::io::ArrayOutputStream array_stream(byteArray, size);
+            //google::protobuf::io::CodedOutputStream coded_stream(&array_stream);
+            //protobuf.SerializeToCodedStream(&coded_stream);
+
+            return byteArray;
         }
 
         float* ExtractWeights()
@@ -198,7 +227,7 @@ namespace onxb
             onnx::GraphProto graph_proto = protobuf.graph();
             int weight_counter = 0;
 
-            for (int i = 1; i < graph_proto.initializer_size() - 1; i++)
+            for (int i = 0; i < graph_proto.initializer_size() - 1; i++)
             {
                 const onnx::TensorProto& tensor_proto = graph_proto.initializer(i);
                 int tensor_size = 1;
@@ -228,7 +257,7 @@ namespace onxb
             onnx::GraphProto* graph_proto = protobuf.mutable_graph();
             int weight_counter = 0;
 
-            for (int i = 1; i < graph_proto->initializer_size() - 1; i++)
+            for (int i = 0; i < graph_proto->initializer_size() - 1; i++)
             {
                 onnx::TensorProto tensor_proto_og = graph_proto->initializer(i);
                 onnx::TensorProto* tensor_proto = graph_proto->mutable_initializer(i);

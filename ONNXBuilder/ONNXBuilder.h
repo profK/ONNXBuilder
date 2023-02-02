@@ -12,7 +12,9 @@ extern "C" {
                 float bias);
     extern int  GetWeightCount(OpaqueModel* model);
     extern float* ExtractWeights(OpaqueModel* model);
-    extern int* GetByteArray(OpaqueModel* model);
+    extern uint8_t* GetByteArray(OpaqueModel* model);
     extern void  SetWeights(OpaqueModel* model, float* weights);
+    extern int GetByteArraySize(OpaqueModel* model);
+    extern void WriteToFile(OpaqueModel* model);
     
 }
