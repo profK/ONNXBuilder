@@ -23,11 +23,7 @@ bool AreArraysEqual(const uint8_t* array1, const uint8_t* array2, size_t size)
 int main()
 {
 
-    //cout << GetDebugFromFile("mlp.onnx") << endl;
-
-    //cout << "-----------------------------" << endl;
-
-   OpaqueModel& mlp = MakeMLP(10, 12, 2, 4, 0.07);
+   OpaqueModel& mlp = MakeMLP(2, 10, 1, 3, 0.07);
 
    int weight_count = GetWeightCount(&mlp);
 
@@ -51,15 +47,9 @@ int main()
 
     int byteArraySize = GetByteArraySize(&mlp);
 
+    WriteToFile(&mlp);
+
     cout << "ByteArraySize: " << byteArraySize << endl;
-
-    //uint8_t* byteArray = GetByteArray(&mlp);
-    //uint8_t* byteArrayString = GetByteString(&mlp);
-
-    //cout << AreArraysEqual(byteArray, byteArrayString, byteArraySize) << endl;
-
-    //WriteToFile(&mlp);
-    //cout << GetDebugString(&mlp) << endl;
 
     return 0; 
 }

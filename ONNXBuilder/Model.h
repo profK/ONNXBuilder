@@ -32,14 +32,35 @@ namespace onxb
             return node;
         }
 
-        onnx::TensorProto*  add_bias_init(float bias)
+        onnx::TensorProto*  add_twice_init(float val)
         {
             onnx::TensorProto* node = protobuf.mutable_graph()->add_initializer();
-            node->mutable_name()->assign("bias");
-            node->add_float_data(bias);
+            node->mutable_name()->assign("double");
+            node->add_float_data(val);
             node->set_data_type(
                 onnx::TensorProto::DataType::TensorProto_DataType_FLOAT);
             return node;
+        }
+
+        onnx::TensorProto* add_minus_one_init(float val)
+        {
+            onnx::TensorProto* node = protobuf.mutable_graph()->add_initializer();
+            node->mutable_name()->assign("minusone");
+            node->add_float_data(val);
+            node->set_data_type(
+                onnx::TensorProto::DataType::TensorProto_DataType_FLOAT);
+            return node;
+        }
+
+        void add_lin_mul_op(string name, string input1, string input2,
+            string output)
+        {
+            onnx::NodeProto* node = protobuf.mutable_graph()->add_node();
+            node->mutable_name()->assign(name);
+            node->add_input(input1);
+            node->add_input(input2);
+            node->add_output(output);
+            node->mutable_op_type()->assign("Mul");
         }
 
         void add_mult_op(string name, string input1, string input2,
@@ -120,21 +141,30 @@ namespace onxb
             output->mutable_name()->assign("output");
 
             add_weights_init("in_weights", input_layer, hidden_layer);
+            add_weights_init("in_bias", 1, hidden_layer);
+            add_twice_init(2.0);
+            add_minus_one_init(-1.0);
+
             for(int layer_num=0;layer_num<hidden_layer_count-1;layer_num++)
             {
                 string numstr = to_string(layer_num);
-                add_weights_init(string("hidden_weights_") + numstr, hidden_layer,
+                add_weights_init("hidden_weights_" + numstr, hidden_layer,
                 hidden_layer);
             }
+
             add_weights_init("out_weights", hidden_layer, output_layer);
-            add_bias_init(bias);
+            add_weights_init("out_bias", 1, output_layer);
 
             // make input layer
             add_mult_op("input_mult","input","in_weights","input_mult_out");
-            add_add_op("input_bias","bias","input_mult_out","input_bias_out");
-            add_relu_op("input_relu","input_bias_out","input_relu_out");
+            add_add_op("input_bias","in_bias","input_mult_out","input_bias_out");
+            add_sigmoid_op("input_sigmoid","input_bias_out","input_sigmoid_out");
+            //add_lin_mul_op("input_sigmoid_twice", "input_sigmoid_out", "double", "input_sigmoid_out_twice");
+            //add_add_op("input_sigmoid_norm", "input_sigmoid_out_twice", "minusone", "input_sigmoid_out_norm");
+
+
             // make hidden layers except last
-            string last_node("input_relu_out");
+            string last_node("input_sigmoid_out");
             for(int layer_num=0;layer_num<hidden_layer_count-1;layer_num++)
             {
                 string numstr = to_string(layer_num);
@@ -151,10 +181,13 @@ namespace onxb
                     string("hidden_relu_out_")+numstr);
                 last_node = string("hidden_relu_out_")+numstr;
             }
+
             //make output layer
             add_mult_op("output_mult",last_node,"out_weights","output_mult_out");
-            add_add_op("ouput_bias","bias","output_mult_out","output_bias_out");
+            add_add_op("ouput_bias","out_bias","output_mult_out","output_bias_out");
             add_sigmoid_op("output_sigmoid","output_bias_out","output");
+            //add_lin_mul_op("output_sigmoid_twice", "output_pre", "double", "out_twice");
+            //add_add_op("output_sigmoid_norm", "out_twice", "minusone", "output");
         }
         string toString()
         {
@@ -170,7 +203,7 @@ namespace onxb
         {
             //onnx::GraphProto graph_proto = protobuf.graph();
             //int weight_count = 0;
-            //for (int i = 0; i < graph_proto.initializer_size() - 1; i++)
+            //for (int i = 0; i < graph_proto.initializer_size(); i++)
             //{
             //    const onnx::TensorProto& tensor_proto = graph_proto.initializer(i);
             //    int tensor_size = 1;
@@ -188,7 +221,7 @@ namespace onxb
             int hidden_weights = (hidden_layer_size * hidden_layer_size * (num_hidden_layer - 1));
             int out_weights = hidden_layer_size * output_layer_size;
 
-            return in_weights_count + hidden_weights + out_weights;
+            return in_weights_count + hidden_weights + out_weights + hidden_layer_size + output_layer_size;
         }
 
         size_t GetByteArraySize()
@@ -227,7 +260,7 @@ namespace onxb
             onnx::GraphProto graph_proto = protobuf.graph();
             int weight_counter = 0;
 
-            for (int i = 0; i < graph_proto.initializer_size() - 1; i++)
+            for (int i = 0; i < graph_proto.initializer_size(); i++)
             {
                 const onnx::TensorProto& tensor_proto = graph_proto.initializer(i);
                 int tensor_size = 1;
@@ -236,7 +269,7 @@ namespace onxb
                     tensor_size *= tensor_proto.dims(j);
                 }
 
-                if (tensor_proto.data_type() == onnx::TensorProto_DataType_FLOAT) {
+                if (tensor_proto.data_type() == onnx::TensorProto_DataType_FLOAT && (tensor_proto.name() != "double" && tensor_proto.name() != "minusone")) {
 
                     std::string raw_data_val = tensor_proto.raw_data();
                     const char* val = raw_data_val.c_str();
@@ -257,7 +290,7 @@ namespace onxb
             onnx::GraphProto* graph_proto = protobuf.mutable_graph();
             int weight_counter = 0;
 
-            for (int i = 0; i < graph_proto->initializer_size() - 1; i++)
+            for (int i = 0; i < graph_proto->initializer_size(); i++)
             {
                 onnx::TensorProto tensor_proto_og = graph_proto->initializer(i);
                 onnx::TensorProto* tensor_proto = graph_proto->mutable_initializer(i);
@@ -267,7 +300,7 @@ namespace onxb
                     tensor_size *= tensor_proto->dims(j);
                 }
 
-                if (tensor_proto->data_type() == onnx::TensorProto_DataType_FLOAT) {
+                if (tensor_proto->data_type() == onnx::TensorProto_DataType_FLOAT && (tensor_proto->name() != "double" && tensor_proto->name() != "minusone")) {
 
                     for (int k = 0; k < tensor_size; k++) {
                         tensor_proto->set_float_data(k, weights[weight_counter]);
